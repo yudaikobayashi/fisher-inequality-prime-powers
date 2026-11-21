@@ -1,0 +1,222 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black,pdftitle={Integrality of design parameters and Fisher's inequality}]{hyperref}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\rank}{rank}
+\newcommand{\PP}{\mathcal{P}}
+\newcommand{\BB}{\mathcal{B}}
+
+\title{Integrality of design parameters and Fisher's inequality\\[2pt]
+  \large Research notes from my student days}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Fisher's inequality $b\ge v$ for a non-trivial $2$-$(v,k,\lambda)$ design is usually proved from the \emph{structure} of the design (a rank or variance argument).
+Is it already a consequence of the \emph{arithmetic} of the parameters, that is, of the relations $bk=vr$ and $r(k-1)=\lambda(v-1)$ together with integrality?
+We show that, for a fixed block size $k\ge2$, this is the case if and only if $k$ is a prime power.
+For every other $k$ there are integral parameter sets with $b<v$ which only Fisher's inequality excludes; we list them for $k\le36$.
+The notes also give the two classical proofs of Fisher's inequality in a self-contained form.
+All statements and proofs have been formalised in Lean~4 with Mathlib (directory \texttt{lean/} of the repository).
+I did not find the prime-power criterion in a limited literature search, but I do not claim that it is new.
+\end{abstract}
+
+\section{Introduction and main result}
+A $2$-$(v,k,\lambda)$ design is a set $\PP$ of $v$ points with a set $\BB$ of $b$ blocks (subsets of $\PP$) of size $k$ such that every two distinct points lie in exactly $\lambda$ blocks.
+Counting incidences shows that every point lies in the same number $r$ of blocks, and
+\begin{equation}\label{eq:basic}
+  bk=vr,\qquad r(k-1)=\lambda(v-1).
+\end{equation}
+Fisher~\cite{fisher1940} derived these relations (his equations (1) and (2)) and showed $r\ge k$, which is equivalent to \emph{Fisher's inequality} $b\ge v$ for a non-trivial design ($v>k$); by Proposition~\ref{prop:equiv} below it is also equivalent to $\lambda(v-1)\ge k(k-1)$, the form used in~\cite{horsley}.
+(For background on designs see~\cite{assmus}.)
+
+Relations~\eqref{eq:basic} do not involve the structure of the design.
+Call $(v,k,\lambda,b,r)$ an \textbf{integral parameter set} if $v>k\ge2$ and $\lambda\ge1$, $b$, $r$ are natural numbers satisfying~\eqref{eq:basic}.
+Does~\eqref{eq:basic} already force $b\ge v$?
+Not always: for $k=6$ the set $(v,\lambda,b,r)=(16,1,8,3)$ satisfies~\eqref{eq:basic} with $b<v$.
+No $2$-$(16,6,1)$ design exists, but this is a consequence of Fisher's inequality and not of arithmetic.
+
+\begin{theorem}[Main theorem]\label{thm:main}
+  Let $k\ge2$. The following are equivalent.
+  \begin{enumerate}
+    \item[(a)] Every integral parameter set $(v,k,\lambda,b,r)$ with this $k$ has $b\ge v$.
+    \item[(b)] $k$ is a prime power.
+  \end{enumerate}
+\end{theorem}
+In other words, for prime-power $k$ Fisher's inequality is a purely arithmetic fact, and for all other $k$ it is not.
+Section~\ref{sec:arith} proves the theorem; Section~\ref{sec:data} lists, for $k\le36$, the parameter sets that violate $b\ge v$; Sections~\ref{sec:basic} and~\ref{sec:fisher} contain the background (relations~\eqref{eq:basic} and two proofs of Fisher's inequality); Section~\ref{sec:lean} describes the formalisation.
+
+\section{The basic relations}\label{sec:basic}
+\begin{lemma}\label{lem:basic}
+  In a $2$-$(v,k,\lambda)$ design with $k\ge2$ every point lies in the same number $r$ of blocks, and \eqref{eq:basic} holds.
+\end{lemma}
+\begin{proof}
+  Fix a point $p$ and let $r_p$ be the number of blocks through $p$.
+  Count the pairs $(q,B)$ with $q\ne p$ and $p,q\in B$: there are $v-1$ choices of $q$ and then $\lambda$ blocks, and there are $r_p$ choices of $B$ and then $k-1$ choices of $q$.
+  Hence $r_p(k-1)=\lambda(v-1)$, so $r_p=r$ does not depend on $p$.
+  Counting pairs $(p,B)$ with $p\in B$ gives $bk=vr$.
+\end{proof}
+
+\section{Two proofs of Fisher's inequality}\label{sec:fisher}
+Let $\mathcal D$ be a $2$-$(v,k,\lambda)$ design with $2\le k<v$ and at least one block; then $\lambda\ge1$ (a block contains a pair of points).
+From $r(k-1)=\lambda(v-1)>\lambda(k-1)$ we get $r>\lambda$; put $n=r-\lambda>0$.
+
+\subsection{Rank proof}
+This is the argument of Bose~\cite{bose1949}, who shows that $\det(A^{\mathsf T}A)\ne0$ (his matrix $NN'$); here it is phrased with the kernel of $A$.
+Let $A$ be the $b\times v$ incidence matrix ($A_{Bp}=1$ if $p\in B$, else $0$).
+The $(p,q)$ entry of $A^{\mathsf T}A$ is the number of blocks containing $p$ and $q$, so
+\[ A^{\mathsf T}A=nI+\lambda J \]
+($J$ the all-ones matrix).
+\begin{proposition}
+  $\ker A=0$. Hence $\rank A=v$ and $b\ge v$.
+\end{proposition}
+\begin{proof}
+  If $Ax=0$ then $0=A^{\mathsf T}Ax=nx+\lambda s\mathbf 1$ where $s=\sum_px_p$.
+  Summing the coordinates gives $(n+v\lambda)s=0$, so $s=0$, and then $nx=0$, so $x=0$.
+  Thus the $v$ columns of $A$ are independent, and $A$ has at least $v$ rows.
+\end{proof}
+(This also gives $\det A^{\mathsf T}A=rk\,n^{v-1}$.)
+
+\subsection{Variance proof}
+This is Fisher's own argument~\cite[\S1]{fisher1940}: the variance of the number of points that a block has in common with the other blocks cannot be negative.
+Fix a block $B$ and let $\mu_C=|B\cap C|$ for the other blocks $C$.
+Counting the pairs $(p,C)$ and the triples $(p,q,C)$ with $p\ne q$ in $B\cap C$, $C\ne B$, gives
+\[ \sum_C\mu_C=k(r-1),\qquad \sum_C\mu_C(\mu_C-1)=k(k-1)(\lambda-1). \]
+By the Cauchy--Schwarz inequality $(\sum\mu_C)^2\le(b-1)\sum\mu_C^2$ (the variance of the $\mu_C$ is non-negative), so
+\[ E:=(b-1)\bigl[k(k-1)(\lambda-1)+k(r-1)\bigr]-k^2(r-1)^2\ge0. \]
+Substituting $b=vr/k$ and $\lambda=r(k-1)/(v-1)$, a direct computation gives $E=r(r-k)(v-k)^2/(v-1)$.
+As $r>0$ and $v>k$, we get $r\ge k$, and $bk=vr\ge vk$ gives $b\ge v$.
+
+\section{The arithmetic of the parameters}\label{sec:arith}
+\begin{proposition}\label{prop:equiv}
+  Let $v,k,\lambda,b,r$ be real numbers with $v>0$, $k>1$ satisfying~\eqref{eq:basic}. Then $b\ge v$ if and only if $\lambda(v-1)\ge k(k-1)$.
+\end{proposition}
+\begin{proof}
+  From~\eqref{eq:basic}, $bk(k-1)=\lambda v(v-1)$.
+  If $b\ge v$ then $\lambda v(v-1)\ge vk(k-1)$, so $\lambda(v-1)\ge k(k-1)$.
+  If $\lambda(v-1)\ge k(k-1)$ then $r(k-1)\ge k(k-1)$, so $r\ge k$ and $bk=vr\ge vk$.
+\end{proof}
+So an integral parameter set violates Fisher's inequality exactly when $\lambda(v-1)<k(k-1)$.
+
+\begin{lemma}\label{lem:pp}
+  Let $k=p^e$ be a prime power and $v,\lambda$ integers. If $k\mid\lambda v(v-1)$ then $k\mid\lambda v$ or $k\mid\lambda(v-1)$.
+\end{lemma}
+\begin{proof}
+  $v$ and $v-1$ are coprime, so $p$ divides at most one of them.
+  If $p\nmid v$ then $p^e$ is coprime to $v$, and $p^e\mid\lambda(v-1)\cdot v$ gives $p^e\mid\lambda(v-1)$; if $p\nmid v-1$ we get $p^e\mid\lambda v$ in the same way.
+\end{proof}
+
+\begin{lemma}\label{lem:idem}
+  If $k\ge2$ is not a prime power there is $n$ with $2\le n\le k-1$ and $k\mid n(n-1)$.
+\end{lemma}
+\begin{proof}
+  Write $k=ab$ with coprime $a,b>1$ (let $a$ be the largest power of the smallest prime factor of $k$).
+  By the Chinese remainder theorem take $0\le n<k$ with $n\equiv0\pmod a$ and $n\equiv1\pmod b$.
+  Then $n\ne0$ (else $b\mid1$) and $n\ne1$ (else $a\mid1$), so $2\le n\le k-1$, and $a\mid n$, $b\mid n-1$ give $k=ab\mid n(n-1)$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+  (b)$\Rightarrow$(a). Let $k=p^e$ and suppose $(v,k,\lambda,b,r)$ is an integral parameter set with $b<v$.
+  By Proposition~\ref{prop:equiv}, $\lambda(v-1)<k(k-1)$.
+  Since $bk(k-1)=\lambda v(v-1)$, we have $k\mid\lambda v(v-1)$, so by Lemma~\ref{lem:pp} either (ii) $k\mid\lambda(v-1)$ or (i) $k\mid\lambda v$.
+  Also $(k-1)\mid\lambda(v-1)$ because $r$ is an integer.
+
+  \emph{Case (ii).} As $\gcd(k,k-1)=1$, $k(k-1)\mid\lambda(v-1)$, and $\lambda(v-1)>0$, so $\lambda(v-1)\ge k(k-1)$, a contradiction.
+
+  \emph{Case (i).} Write $\lambda v=m_1k$ and $\lambda(v-1)=m_2(k-1)$ with positive integers $m_1,m_2$.
+  Subtracting, $\lambda=(m_1-m_2)k+m_2$.
+  From $m_2(k-1)=\lambda(v-1)<k(k-1)$ we get $m_2<k$.
+  \begin{itemize}
+    \item If $m_1>m_2$ then $\lambda\ge k+m_2>k$, hence $\lambda(v-1)\ge\lambda k>k^2>k(k-1)$ (using $v\ge k+1$), a contradiction.
+    \item If $m_1=m_2$ then $\lambda=m_2$ and $\lambda v=\lambda k$, so $v=k$, a contradiction.
+    \item If $m_1<m_2$ then $\lambda\le m_2-k<0$, a contradiction.
+  \end{itemize}
+
+  (a)$\Rightarrow$(b). Suppose $k\ge2$ is not a prime power, and take $n$ from Lemma~\ref{lem:idem}.
+  Put $\lambda=1$, $v=1+n(k-1)$, $r=n$, and $b=v(v-1)/(k(k-1))=v\,n/k$.
+  Then $v\ge1+2(k-1)\ge k+1$, and $r(k-1)=\lambda(v-1)$.
+  Moreover $vn=n+n^2(k-1)=n^2k-n(n-1)$ is divisible by $k$ because $k\mid n(n-1)$, so $b$ is an integer and $bk=vn=vr$.
+  Finally $\lambda(v-1)=n(k-1)\le(k-1)^2<k(k-1)$, i.e.\ $b<v$ by Proposition~\ref{prop:equiv}.
+  So $(v,k,1,b,r)$ is an integral parameter set violating Fisher's inequality.
+\end{proof}
+
+\begin{corollary}
+  If $k$ is a prime power, then Fisher's inequality $b\ge v$ holds for all integral parameter sets with this $k$; the structure of the design is not needed.
+\end{corollary}
+
+\section{Parameter sets below the Fisher bound}\label{sec:data}
+Table~\ref{tab:data} lists, for every non-prime-power $k\le36$, the number of integral parameter sets $(v,k,\lambda,b,r)$ with $b<v$ and the smallest one (by $v$).
+All $117$ sets are in \texttt{params.csv}, generated by \texttt{params\_table.py} (both in \texttt{notes/}).
+By Theorem~\ref{thm:main} there are none for prime-power $k$.
+Each of them satisfies~\eqref{eq:basic} and is excluded as a design only by Fisher's inequality.
+
+\begin{table}[!ht]
+  \centering
+  \caption{Integral parameter sets with $b<v$, $k\le36$ (smallest example by $v$).}\label{tab:data}
+  \begin{tabular}{rrrrrr}
+  \toprule
+  $k$ & number & $v$ & $\lambda$ & $b$ & $r$ \\\midrule
+  6 & 2 & 16 & 1 & 8 & 3 \\
+  10 & 4 & 16 & 3 & 8 & 5 \\
+  12 & 4 & 34 & 2 & 17 & 6 \\
+  14 & 2 & 92 & 1 & 46 & 7 \\
+  15 & 7 & 21 & 7 & 14 & 10 \\
+  18 & 4 & 52 & 3 & 26 & 9 \\
+  20 & 5 & 96 & 1 & 24 & 5 \\
+  21 & 9 & 36 & 4 & 12 & 7 \\
+  22 & 6 & 34 & 7 & 17 & 11 \\
+  24 & 6 & 70 & 4 & 35 & 12 \\
+  26 & 4 & 66 & 5 & 33 & 13 \\
+  28 & 10 & 49 & 9 & 28 & 16 \\
+  30 & 13 & 88 & 5 & 44 & 15 \\
+  33 & 10 & 45 & 8 & 15 & 11 \\
+  34 & 6 & 52 & 11 & 26 & 17 \\
+  35 & 7 & 120 & 2 & 24 & 7 \\
+  36 & 18 & 46 & 14 & 23 & 18 \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Formalisation in Lean~4}\label{sec:lean}
+The directory \texttt{lean/} of the repository contains a Lean~4 / Mathlib formalisation without \texttt{sorry}; the theorems depend only on the standard axioms (\texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}).
+Theorem~\ref{thm:main} reads (file \texttt{Params.lean}):
+\begin{verbatim}
+theorem fisher_of_integral_iff {k : N} (hk : 2 <= k) :
+    (forall v l b r : N, k < v -> 1 <= l -> b * k = v * r ->
+        r * (k - 1) = l * (v - 1) -> v <= b)
+      <-> IsPrimePow k
+\end{verbatim}
+(written here in ASCII; in the file with $\mathbb N$, $\forall$, $\to$, $\le$, $\leftrightarrow$).
+The other files formalise the background: designs and incidence matrices, $A^{\mathsf T}A=nI+\lambda J$, both proofs of Fisher's inequality (\texttt{fisher}, \texttt{fisher\_variance}), and the further standard facts that a $t$-design is an $s$-design for $s\le t$, the Pascal-type recursion for the numbers of blocks containing a set and avoiding another, $\det A^{\mathsf T}A=rk\,n^{v-1}$, and the description of isomorphism of incidence structures by permutations of the rows and columns of the incidence matrix.
+
+Fisher's inequality has been formalised before, in Isabelle/HOL by Edmonds and Paulson~\cite{edmonds2022} and in Lean~4 by Wang and Uskuplu~\cite{wang2026}, the latter as part of a formalisation of the Bruck--Ryser--Chowla theorem.
+The formalisation here was written independently; I have not compared the statements.
+
+\begin{thebibliography}{9}
+\bibitem{fisher1940} R.~A. Fisher, An examination of the different possible solutions of a problem in incomplete blocks, \emph{Ann.\ Eugenics} \textbf{10} (1940), 52--75. \href{https://hdl.handle.net/2440/15239}{hdl:2440/15239}
+\bibitem{bose1949} R.~C. Bose, A note on Fisher's inequality for balanced incomplete block designs, \emph{Ann.\ Math.\ Statist.} \textbf{20} (1949), 619--620. \href{https://doi.org/10.1214/aoms/1177729958}{doi:10.1214/aoms/1177729958}
+\bibitem{assmus} E.~F. Assmus Jr.\ and J.~D. Key, \emph{Designs and Their Codes}, Cambridge University Press, 1992. \href{https://doi.org/10.1017/CBO9781316529836}{doi:10.1017/CBO9781316529836}
+\bibitem{horsley} D. Horsley, Generalising Fisher's inequality to coverings and packings, \href{https://arxiv.org/abs/1409.0485}{arXiv:1409.0485}.
+\bibitem{edmonds2022} C. Edmonds and L.~C. Paulson, Formalising Fisher's inequality: formal linear algebraic proof techniques in combinatorics, in \emph{13th International Conference on Interactive Theorem Proving (ITP 2022)}, LIPIcs \textbf{237}, 11:1--11:19. \href{https://doi.org/10.4230/LIPIcs.ITP.2022.11}{doi:10.4230/LIPIcs.ITP.2022.11}. Archive of Formal Proofs entry ``Fisher's Inequality: Linear Algebraic Proof Techniques for Combinatorics'', 2022.
+\bibitem{wang2026} E.~J. Wang and E. Uskuplu, Formalizing the Bruck--Ryser--Chowla theorem: combinatorial design theory in Lean, in \emph{17th International Conference on Interactive Theorem Proving (ITP 2026)}, LIPIcs \textbf{382}, 19:1--19:19. \href{https://doi.org/10.4230/LIPIcs.ITP.2026.19}{doi:10.4230/LIPIcs.ITP.2026.19}
+\end{thebibliography}
+
+\end{document}

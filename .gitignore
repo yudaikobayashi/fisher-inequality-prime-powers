@@ -1,0 +1,6 @@
+/lean/.lake
+/notes/*.aux
+/notes/*.log
+/notes/*.out
+/notes/*.toc
+/notes/*.synctex.gz
